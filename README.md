@@ -7,14 +7,14 @@ Repository: [https://github.com/Frwops/Moda](https://github.com/Frwops/Moda)
 ## Prerequisites
 
 - Node.js 20+
-- Docker (optional, for local MariaDB)
+- **MySQL 8+** or **MariaDB 10.6+** running locally (or on a host you can reach with TCP). Create an empty database and a user with rights on it; values must match `backend/.env`.
 
 ## Quick start
 
 ```bash
 npm install
-docker compose up -d
 cp backend/.env.example backend/.env
+# Edit backend/.env with your DB host, user, password, and database name.
 npm run dev:backend
 ```
 
@@ -38,7 +38,7 @@ Open `http://localhost:5173`. The home page calls `GET /api/v1` and `GET /api/v1
 
 ## Database
 
-`docker compose` starts MariaDB 11 with database `moda` and user `moda` / password `moda` (development only). Match values in `backend/.env`.
+There is **no Docker** in this repo. Install MySQL or MariaDB yourself, create database `moda` (or any name) and a user, then set `DB_*` in `backend/.env` to match.
 
 Set `TYPEORM_SYNC=true` in `backend/.env` **only** for local prototyping; use migrations for real schema evolution (`synchronize: false` in production).
 

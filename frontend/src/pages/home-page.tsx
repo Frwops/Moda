@@ -73,7 +73,8 @@ export function HomePage() {
           </ul>
         ) : null}
         <p className="hint">
-          Start backend: <code>npm run dev:backend</code> · DB: <code>docker compose up -d</code>
+          Start backend: <code>npm run dev:backend</code> · Ensure MySQL/MariaDB matches{' '}
+          <code>backend/.env</code>
         </p>
       </section>
     </main>
