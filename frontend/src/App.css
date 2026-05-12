@@ -20,7 +20,9 @@
 
 nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
+  align-items: center;
 }
 
 nav a {
@@ -79,4 +81,64 @@ nav a:hover {
   background: #f0f0f0;
   padding: 0.1em 0.35em;
   border-radius: 4px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 22rem;
+}
+
+.field span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.field input {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.primary {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #1a1a8c;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1a1a8c;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.google-wrap {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.google-btn-host {
+  display: flex;
+  justify-content: flex-start;
 }

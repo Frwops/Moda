@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchJson } from '../api/client';
+import { useAuth } from '../auth/auth-context';
 
 type RootResponse = {
   readonly name: string;
@@ -12,6 +13,7 @@ type HealthResponse = {
 };
 
 export function HomePage() {
+  const { user, bootstrapping: authLoading, logout } = useAuth();
   const [root, setRoot] = useState<RootResponse | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +57,19 @@ export function HomePage() {
         <nav>
           <Link to="/">Home</Link>
           <Link to="/about">About</Link>
+          {user ? (
+            <>
+              <span className="muted">{user.email}</span>
+              <button type="button" className="link-btn" onClick={() => void logout()}>
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Sign in</Link>
+              <Link to="/register">Register</Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -73,8 +88,9 @@ export function HomePage() {
           </ul>
         ) : null}
         <p className="hint">
-          Start backend: <code>npm run dev:backend</code> · Ensure MySQL/MariaDB matches{' '}
-          <code>backend/.env</code>
+          Start backend: <code>npm run dev:backend</code> · DB: <code>backend/.env</code> · Auth:{' '}
+          <code>/api/v1/auth/*</code>
+          {authLoading ? ' · Session check…' : ''}
         </p>
       </section>
     </main>

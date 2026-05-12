@@ -8,6 +8,8 @@ export function AboutPage() {
         <nav>
           <Link to="/">Home</Link>
           <Link to="/about">About</Link>
+          <Link to="/login">Sign in</Link>
+          <Link to="/register">Register</Link>
         </nav>
       </header>
       <section className="panel">

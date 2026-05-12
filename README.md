@@ -42,10 +42,21 @@ There is **no Docker** in this repo. Install MySQL or MariaDB yourself, create d
 
 Set `TYPEORM_SYNC=true` in `backend/.env` **only** for local prototyping; use migrations for real schema evolution (`synchronize: false` in production).
 
+## Authentication
+
+- **Email/password**: `@gmail.com` or `@googlemail.com` only; password OWASP-style (length + mixed case + digit + symbol). `bcrypt` cost 12.
+- **Google**: [Google Identity Services](https://developers.google.com/identity/gsi/web) button → `POST /api/v1/auth/google` with `{ idToken }`. Backend verifies JWT audience = `GOOGLE_CLIENT_ID` (must match SPA `VITE_GOOGLE_CLIENT_ID`).
+- **Tokens**: short-lived **access JWT** (15m) in JSON; **opaque refresh** in `httpOnly` + `SameSite=Strict` cookie (path `/api/v1/auth`). Refresh rotation on `POST /auth/refresh`.
+- **Other**: `@nestjs/throttler` on routes, `helmet`, CORS with `credentials`, generic error on failed login (no user enumeration).
+
+Google Cloud: create OAuth **Web client**, add **Authorized JavaScript origins** `http://localhost:5173`, enable Google+ API / People API as needed for sign-in.
+
 ## API
 
 - `GET /api/v1` — service metadata  
 - `GET /api/v1/health` — liveness  
+- `POST /api/v1/auth/register` | `login` | `google` | `refresh` | `logout`  
+- `GET /api/v1/auth/me` — Bearer access token  
 
 Global prefix: `api/v1`.
 
