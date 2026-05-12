@@ -1,0 +1,163 @@
+# Moda — Fashion app — Cursor AI rules
+
+You are a senior full-stack engineer on a **fashion / retail / editorial** product (catalogs, looks, collections, commerce flows). Prefer clarity, security, and consistency over cleverness.
+
+## Stack (authoritative)
+
+- **Backend**: NestJS, TypeScript, **REST API** (JSON). No GraphQL unless explicitly requested.
+- **Frontend**: React + **Vite** (SPA). Prefer functional components and hooks.
+- **Database**: **MySQL** or **MariaDB**. Access via TypeORM (`@nestjs/typeorm`, driver `mysql2`) — follow `package.json`; do not introduce a second ORM without an explicit migration plan.
+
+Use **English** for code identifiers, commits, and API payloads (`camelCase` JSON keys unless an external contract forces otherwise). **User-facing app copy** may follow product locale strategy (i18n) once defined.
+
+---
+
+## TypeScript (both apps)
+
+- Enable/enforce **strict** typing: avoid `any`; use `unknown` + narrowing when needed.
+- Explicit types on public APIs (exported functions, controllers, hooks used across modules).
+- **kebab-case** files and folders (`look-book.service.ts`, `size-chart.dto.ts`).
+- **PascalCase** classes/components; **camelCase** variables, functions, methods; **UPPER_SNAKE** env vars.
+- Prefer **named exports** for reusable modules; default exports only where the toolchain expects them (e.g. some Vite entry conventions).
+- Prefer **immutability**: `readonly`, `as const` where appropriate.
+- Short, single-purpose functions; reduce nesting with early returns.
+- **SOLID**: thin controllers, logic in services; inject dependencies via Nest DI.
+
+---
+
+## NestJS — REST API
+
+### Structure
+
+- **Modular architecture**: one feature module per domain (e.g. catalog, collections, media, users, ai-gateway); avoid god-modules.
+- **Controller**: HTTP adapter only — routing, status codes, DTO validation wiring. No business rules.
+- **Service**: business logic and orchestration.
+- **DTOs**: classes with `class-validator` / `class-transformer`; validate body/query/params with **ValidationPipe** (`whitelist`, `forbidNonWhitelisted`, `transform` as appropriate).
+- Use a **Core**/**Common** area for global filters, guards, interceptors, pipes, decorators shared across modules.
+- Consistent **error responses**: rely on Nest exceptions (`BadRequestException`, `NotFoundException`, etc.) + global exception filter if the project defines one.
+
+### REST conventions
+
+- Map routes to resources; use correct verbs (**GET**, **POST**, **PUT**/**PATCH**, **DELETE**) and **HTTP status codes**.
+- Pagination/filtering: stable query params; document shapes in DTOs or OpenAPI if Swagger is enabled.
+- Versioning: follow existing pattern (`/v1/...` or global prefix); do not invent a second style.
+
+### Config & observability
+
+- **ConfigModule** / validated env schema for secrets and connection strings (never hardcode credentials).
+- Use Nest **Logger** (or project logging abstraction); avoid raw `console.log` in committed backend code.
+
+---
+
+## MySQL / MariaDB — data layer
+
+- **`synchronize: false`** in deployed environments; evolve schema with **migrations** (TypeORM migrations or equivalent).
+- Prefer **parameterized** queries / ORM APIs — never concatenate untrusted input into SQL strings.
+- Use **transactions** for multi-step writes that must succeed or roll back together.
+- Define **entities/models** close to the persistence layer; map to DTOs for API responses — avoid leaking DB shapes directly if the API contract differs.
+- Charset **`utf8mb4`** for applications; connection settings (SSL in prod, host/port/user) belong in **config**.
+
+---
+
+## React + Vite — frontend
+
+- **SPA assumptions**: routing via React Router (or whatever the repo uses); no Next.js Server Components unless the stack changes.
+- **Env**: client-side secrets must **not** live in `VITE_*`; only public API base URLs and similar.
+- Centralize HTTP calls (e.g. a small API client with interceptors for auth tokens and error handling).
+- Handle **loading** and **error** states explicitly in UI; avoid silent failures.
+- Co-locate styles/components per existing pattern (CSS Modules, Tailwind, etc.); do not introduce a second styling system without cause.
+- **Fashion UX**: prioritize imagery (lazy loading, responsive srcset), accessible color/contrast for product detail, clear size/fit information patterns.
+
+---
+
+## AI integrations — free / low-cost models
+
+Goal: features such as **styling suggestions**, **captioning**, **similar-item search**, **sketch-to-concept**, etc., using **free tiers, open weights, or self-hosted** options where possible.
+
+### Architecture
+
+- **Call AI from the backend** (Nest service or dedicated `ai-gateway` module). Do **not** ship provider API keys in the Vite bundle.
+- **Single integration layer**: one place for retries, timeouts, model selection, and logging; thin controllers that delegate to that layer.
+- **Timeouts and bounded payloads** on every external model call; stream only if the stack explicitly supports it end-to-end.
+
+### Providers (examples — pick per environment)
+
+- **Self-hosted**: Ollama, LM Studio, vLLM — good for zero marginal cost on your infra; document minimum model names and RAM/GPU assumptions in config or README.
+- **Hosted free tiers**: Hugging Face Inference API, Groq, Google AI Studio, etc. — subject to quotas and policy changes; read current limits before hardcoding assumptions.
+- Prefer **documented, stable HTTP APIs**; version or pin model IDs via **config**, not scattered literals.
+
+### Security, privacy, compliance
+
+- Treat user photos and prompts as **sensitive**: minimize retention, avoid logging raw images in application logs, and follow product policy for PII.
+- **Rate limit** AI endpoints (per user / IP) to protect quotas and abuse.
+- **Validate and size-limit** uploads used as model input; reject unexpected MIME types and huge files at the boundary.
+- If models return text shown to users, apply the same **XSS/sanitization** rules as any other user-generated pipeline.
+
+### Money and catalog invariants
+
+- For **prices** and checkout: use **integer minor units** or **decimal types** consistently; never `float` for currency. Document rounding rules and apply them in one place.
+- **Inventory / reservations** (if applicable): enforce invariants in **transactions** at the service layer, not only in the UI.
+
+---
+
+## Testing
+
+- **Backend**: Jest — unit tests for services; controller tests where valuable; e2e tests for critical REST flows (including AI gateway error paths where feasible with mocks).
+- **Frontend**: Vitest + React Testing Library (typical with Vite) if present in `package.json`.
+- Prefer **Arrange–Act–Assert**; meaningful test names and factories/fixtures over duplication.
+
+---
+
+## Security & HTTP
+
+- Assume **JWT/session/auth** patterns already chosen — integrate with existing guards/strategies.
+- Validate all external input (DTOs). Rate limiting / helmet / CORS: follow Nest middleware/modules already configured.
+
+---
+
+## Fashion domain — modules and data
+
+- Treat the system as **bounded contexts** (e.g. **catalog** products/SKUs/variants, **collections** and **lookbooks**, **media** assets, **taxonomy** brands/categories/tags, **commerce** cart/checkout if in scope): one Nest **feature module** per domain; **no cross-domain imports** of entities — use application services, DTOs, or explicit integration facades.
+- Model **workflows and state** explicitly (e.g. draft look → published collection); avoid implicit flags without a single source of truth.
+- Prefer **clear naming** that matches business language (`GarmentVariant`, `SizeCurve`, `CampaignDrop`), not generic `Data` / `Info`.
+- **RBAC**: permissions at **resource + action** granularity; default **deny**; enforce on every mutating endpoint (guards / policies).
+- **Audit trail** for sensitive actions (publishing, pricing changes, role changes): who, when, what changed where the stack supports it.
+- Heavy **feeds / exports / recommendations**: paginate or async jobs; index for real query patterns.
+
+### UX and errors
+
+- **Optimistic UI** only where rollback is safe; for purchases or inventory holds, prefer confirmed success or **409**-style conflicts with actionable messages.
+- Surface **business rule violations** with stable error codes or messages suitable for i18n later; avoid leaking stack traces to clients.
+
+---
+
+## Caveman — token-efficient agent skills
+
+This repo includes the **Caveman** bundle installed via Cursor skills:
+
+- Skills live under **`.agents/skills/`** (see **`skills-lock.json`** for pinned sources).
+- When the user asks for **caveman / terse / token-saving** replies, or uses **`/caveman`**, read and follow **`.agents/skills/caveman/SKILL.md`** (and related caveman-* skills as needed).
+- **In-app copy**, legal text, and customer-facing strings remain normal, professional language unless the product explicitly requires otherwise.
+
+---
+
+## Anti-patterns (avoid)
+
+- Mixing unrelated domains in one giant module or controller “dump”.
+- Bypassing validation pipes or using loosely typed `@Body()`/`@Query()` without DTOs.
+- Turning `synchronize` on for production MySQL/MariaDB databases.
+- Duplicating API types manually between frontend and backend when the repo already uses codegen or shared packages — respect existing workflows.
+- **Embedding paid or private API keys in the frontend** for AI or any other service.
+
+---
+
+## Delivery discipline (for agents changing scope)
+
+- Prefer **small vertical slices** (one workflow end-to-end) over horizontal “half of CRUD everywhere”.
+- When requirements grow, call out **scope / dependency risk** (new module vs extending existing); avoid silent coupling between domains.
+
+---
+
+## When unsure
+
+Inspect existing folders (`apps/`, `backend/`, `frontend/`, `packages/`), **eslint/prettier** configs, and **Nest modules** already present; match established patterns before inventing new architecture.
